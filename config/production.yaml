@@ -1,0 +1,30 @@
+app:
+  env: production
+  debug: false
+  log_level: INFO
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  cors_origins: []            # set explicitly in Secret Manager
+
+database:
+  pool_size: 20
+  max_overflow: 40
+  echo: false
+
+rail_bus:
+  concurrency: 8
+  max_retries: 5
+
+image_generation:
+  device: cuda
+  batch_size: 4
+  timeout_seconds: 120
+
+storage:
+  backend: gcs
+
+observability:
+  tracing_enabled: true
+  metrics_enabled: true

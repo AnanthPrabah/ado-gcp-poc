@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.next/
+out/
+*.tsbuildinfo
+.env*
+!.env.example
+adc.json
+frontend/adc.json

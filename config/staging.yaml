@@ -1,0 +1,30 @@
+app:
+  env: staging
+  debug: false
+  log_level: DEBUG
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  cors_origins: []
+
+database:
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+rail_bus:
+  concurrency: 4
+  max_retries: 3
+
+image_generation:
+  device: cuda
+  batch_size: 2
+  timeout_seconds: 180
+
+storage:
+  backend: gcs
+
+observability:
+  tracing_enabled: true
+  metrics_enabled: true

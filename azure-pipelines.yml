@@ -1,0 +1,53 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  GCP_PROJECT_ID: 'necai-001'
+  GCP_REGION: 'us-south1'
+  ARTIFACT_REPOSITORY: 'necai-dev'
+
+stages:
+- stage: BuildAndPush
+  displayName: Build and Push Images
+
+  jobs:
+  - job: DockerBuildPush
+    displayName: Build Frontend and Backend
+
+    steps:
+
+    - checkout: self
+
+    - task: GcpWifAuth@0
+      displayName: Authenticate to GCP
+      inputs:
+        connectedServiceId: 'nec-azure-gcp-sc'
+
+    - script: |
+        gcloud auth list
+        gcloud config set project necai-001
+        gcloud auth configure-docker us-south1-docker.pkg.dev --quiet
+      displayName: Configure Artifact Registry Authentication
+
+    - script: |
+        docker build -t us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId) ./frontend
+
+        docker tag us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId) \
+                   us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:latest
+
+        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId)
+        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:latest
+      displayName: Build and Push Frontend
+
+    - script: |
+        docker build -t us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId) ./backend
+
+        docker tag us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId) \
+                   us-south1-docker.pkg.dev/necai-001/necai-dev/backend:latest
+
+        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId)
+        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/backend:latest
+      displayName: Build and Push Backend

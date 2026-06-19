@@ -1,0 +1,31 @@
+app:
+  env: development
+  debug: true
+  log_level: DEBUG
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  cors_origins: ["*"]
+
+database:
+  pool_size: 5
+  max_overflow: 10
+  echo: true
+
+rail_bus:
+  concurrency: 2
+  max_retries: 3
+
+image_generation:
+  device: cpu
+  batch_size: 1
+  timeout_seconds: 300
+
+storage:
+  backend: local             # local | gcs
+  local_path: ./local_storage
+
+observability:
+  tracing_enabled: false
+  metrics_enabled: false

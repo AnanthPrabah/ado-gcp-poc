@@ -1,0 +1,447 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Barlow:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* Enable class-based dark mode in Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Premium Scrollbar Customizations for Light and Dark Themes (Global Root Level) */
+.custom-scrollbar::-webkit-scrollbar,
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 9999px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.22);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Utility to explicitly hide scrollbars when needed */
+.scrollbar-hide::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-hide,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+@theme {
+  /* Typography */
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Barlow", ui-monospace, SFMono-Regular, monospace;
+
+  /* Standardized font sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+
+  /* Semantic Theme Variables mapped to CSS Custom Properties */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-table: var(--bg-table);
+  --color-bg-elevated: var(--bg-elevated);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-border-primary: var(--border-primary);
+  --color-accent-primary: var(--accent-primary);
+
+  /* Standardized Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* Standardized Shadows */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+}
+
+/* Centralized Theme Definitions (Modifiable in One Place) */
+:root,
+.light {
+  --bg-primary: #F4F6F8;
+  /* Subtle cool tonal backdrop */
+  --bg-secondary: #FFFFFF;
+  /* Clean white cards */
+  --bg-tertiary: #FAFBFC;
+  /* Slight off-white for sidebar base */
+  --bg-table: #FCFCFD;
+  /* Premium table container base */
+  --bg-elevated: #F9FAFB;
+  /* Input fields and hover surfaces */
+
+  --text-primary: #0F172A;
+  /* Slate-900 deep primary */
+  --text-secondary: #475467;
+  /* Richer body text — premium contrast */
+  --text-tertiary: #98A2B3;
+  /* Muted text labels */
+
+  --border-primary: #ECEEF2;
+  /* Soft clean elevated border */
+  --accent-primary: #2563EB;
+  /* Premium active accent color */
+
+  /* Standardized Premium Shadows (Layer 2 & 3 Elevation) */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.05);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 12px 32px rgba(16, 24, 40, 0.03);
+}
+
+.dark {
+  --bg-primary: #05070A;
+  /* Deep cinematic dark — NOT pure black */
+  --bg-secondary: #0D1117;
+  /* Primary card surface */
+  --bg-tertiary: #090B0F;
+  /* Sidebar base */
+  --bg-table: #0B0F15;
+  /* Table container dark base */
+  --bg-elevated: #131922;
+  /* Hover, modal, elevated surfaces */
+
+  --text-primary: #FFFFFF;
+  /* Crisp primary text */
+  --text-secondary: #98A2B3;
+  /* Softer secondary — reads well on dark */
+  --text-tertiary: #667085;
+  /* Muted dark labels */
+
+  --border-primary: rgba(255, 255, 255, 0.03);
+  /* Premium refined soft dark border */
+  --accent-primary: #2563EB;
+  /* Premium active accent color */
+
+  /* Dark mode elevated surface depth system */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased text-text-primary bg-bg-primary dark:bg-bg-primary dark:text-text-primary;
+    font-size: 14px;
+    /* Premium Sweet-spot enterprise readability */
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight text-text-primary dark:text-text-primary;
+  }
+
+  .tracking-widest {
+    letter-spacing: 0.1em;
+  }
+
+  .tracking-tight {
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer utilities {
+
+  /* Simple Premium Transition Utilities */
+  .transition-premium {
+    transition: all .18s ease;
+  }
+
+  .transition-standard {
+    transition: all .18s ease;
+  }
+
+  .transition-fast {
+    transition: all 0.1s ease;
+  }
+
+  /* Micro Interaction Systems */
+  .active-scale {
+    @apply active:scale-[0.98];
+    transition: all 0.1s ease;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-hidden;
+    transition: all .18s ease;
+  }
+
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+  }
+
+  .dark .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .08);
+  }
+
+
+
+  /* Glassmorphism standardization - reduced backdrop blur to 8px */
+  .glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .dark .glass {
+    background: rgba(23, 24, 26, 0.72);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Premium Typography Classes */
+  .heading-primary {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: #0F172A;
+  }
+
+  .dark .heading-primary {
+    color: #FFFFFF;
+  }
+
+  .heading-section {
+    font-size: 22px;
+    font-weight: 600;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  .dark .heading-section {
+    color: #FFFFFF;
+  }
+
+  .heading-table {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #667085;
+  }
+
+  .dark .heading-table {
+    color: #667085;
+  }
+
+  /* Sidebar Solid Base Colors */
+  .sidebar-bg {
+    background: #FAFBFC;
+    border-right: 1px solid #ECEEF2;
+  }
+
+  .dark .sidebar-bg {
+    background: #090B0F;
+    border-right: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  /* Sidebar Active Item */
+  .sidebar-active-item {
+    background: #FFFFFF;
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  .dark .sidebar-active-item {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+    border-color: rgba(255, 255, 255, 0.03);
+    box-shadow: none;
+  }
+
+  /* Reusable Compact Premium Card Style */
+  .premium-card {
+    border-radius: 16px;
+    padding: 20px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FCFCFD 100%);
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.03),
+      0 12px 24px rgba(16, 24, 40, 0.04);
+    border: 1px solid #ECEEF2;
+    transition: all .22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premium-card:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.03),
+      0 16px 32px rgba(15, 23, 42, 0.06);
+    border-color: #CBD5E1;
+  }
+
+  .dark .premium-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .00));
+    background-color: #0D1117;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 12px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  .dark .premium-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  /* Premium Restrained Upload Button Styling */
+  .btn-upload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding-left: 18px;
+    padding-right: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 12px;
+    background: #111827;
+    color: #FFFFFF;
+    transition: all .18s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-upload:hover {
+    filter: brightness(1.05);
+  }
+
+  .dark .btn-upload {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #F8FAFC;
+  }
+
+  .dark .btn-upload:hover {
+    background: rgba(255, 255, 255, 0.07);
+    filter: brightness(1.05);
+  }
+
+  /* Premium Sophisticated Row Hover State */
+  .table-row-hover {
+    transition: background .18s ease;
+  }
+
+  .table-row-hover:hover {
+    background: rgba(15, 23, 42, 0.038) !important;
+  }
+
+  .dark .table-row-hover:hover {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)) !important;
+  }
+
+  /* Premium Dynamic Dropdown Styling */
+  .premium-dropdown {
+    border-radius: 16px;
+    padding: 12px;
+    background: #FFFFFF;
+    border: 1px solid #ECEEF2;
+    box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+    transition: all .22s ease;
+  }
+
+  .dark .premium-dropdown {
+    background: linear-gradient(180deg, #101620 0%, #0C1118 100%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .premium-dropdown-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+    transition: all .18s ease;
+    cursor: pointer;
+    color: #475467;
+  }
+
+  .premium-dropdown-item:hover {
+    background: #F1F5F9;
+    color: #0F172A;
+  }
+
+  .dark .premium-dropdown-item {
+    color: #C7D0DC;
+  }
+
+  .dark .premium-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: #FFFFFF;
+  }
+  
+  .premium-dropdown-item.selected {
+    color: #0F172A;
+    font-weight: 600;
+  }
+  
+  .dark .premium-dropdown-item.selected {
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+  
+  .premium-dropdown-item-secondary {
+    color: #98A2B3;
+  }
+  
+  .dark .premium-dropdown-item-secondary {
+    color: #8B95A7;
+  }
+}

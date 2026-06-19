@@ -1,0 +1,6 @@
+{
+  "name": "Photo Real AI",
+  "description": "A governed enterprise creative-automation platform for New Era Cap that converts tech packs into approved, photo-real product representations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

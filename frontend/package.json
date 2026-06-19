@@ -1,0 +1,33 @@
+{
+  "name": "photo-real-asset-studio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port=3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/genai": "^1.29.0",
+    "@tailwindcss/postcss": "^4.3.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "next": "^16.2.6",
+    "pdfjs-dist": "^6.0.227",
+    "postcss": "^8.5.15",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/estree": "^1.0.9",
+    "@types/node": "^22.14.0",
+    "@types/react": "19.2.15",
+    "autoprefixer": "^10.4.21",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2"
+  }
+}
