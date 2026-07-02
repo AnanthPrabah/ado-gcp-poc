@@ -39,7 +39,7 @@ stages:
 
         echo "Requesting Azure DevOps OIDC token..."
 
-        OIDC_TOKEN=$(curl -sf -X POST \
+        OIDC_TOKEN=$(curl -v -X POST \
           "$(System.CollectionUri)$(System.TeamProjectId)/_apis/distributedtask/hubs/build/plans/$(System.PlanId)/jobs/$(System.JobId)/oidctoken?serviceConnectionId=$(ADO_GCP_SERVICE_CONNECTION_ID)&api-version=7.1-preview.1" \
           -H "Authorization: Bearer $(System.AccessToken)" \
           -H "Content-Type: application/json" \
