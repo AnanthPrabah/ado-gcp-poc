@@ -62,7 +62,7 @@ stages:
 
         echo "Generating Service Account Access Token..."
 
-        ACCESS_TOKEN=$(curl -sf -X POST \
+        ACCESS_TOKEN=$(curl -v -X POST \
           "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GCP_DEPLOY_SA):generateAccessToken" \
           -H "Authorization: Bearer $FEDERATED_TOKEN" \
           -H "Content-Type: application/json" \
