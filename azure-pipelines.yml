@@ -39,15 +39,18 @@ stages:
 
         echo "Requesting Azure DevOps OIDC token..."
 
-        OIDC_TOKEN=$(curl -sS -X POST \
+        OIDC_RESPONSE=$(curl -sS -X POST \
           "$(System.CollectionUri)$(System.TeamProjectId)/_apis/distributedtask/hubs/build/plans/$(System.PlanId)/jobs/$(System.JobId)/oidctoken?serviceConnectionId=$(ADO_GCP_SERVICE_CONNECTION_ID)&api-version=7.1-preview.1" \
           -H "Authorization: Bearer $(System.AccessToken)" \
           -H "Content-Type: application/json" \
           -d "{}")
 
+        echo "===== OIDC Response ====="
         echo "$OIDC_RESPONSE"
 
         OIDC_TOKEN=$(echo "$OIDC_RESPONSE" | jq -r '.oidcToken')
+
+        echo "OIDC Token extracted."
 
         echo "Exchanging OIDC token with Google STS..."
 
