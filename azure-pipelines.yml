@@ -1,53 +1,132 @@
 trigger:
-  - main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: ubuntu-latest
 
 variables:
-  GCP_PROJECT_ID: 'necai-001'
-  GCP_REGION: 'us-south1'
-  ARTIFACT_REPOSITORY: 'necai-dev'
+  GCP_PROJECT_ID: "necai-001"
+  GCP_PROJECT_NUMBER: "1087209949097"
+  GCP_REGION: "us-south1"
+  GCP_ARTIFACT_REPO: "necai-dev"
+
+  # Replace these with your actual values
+  GCP_WORKLOAD_POOL: "nec-test2-ip"
+  GCP_WORKLOAD_PROVIDER: "nec-test-2-provider"
+  GCP_DEPLOY_SA: "nec-test-2@necai-001.iam.gserviceaccount.com"
+
+  # Azure DevOps ARM Service Connection GUID
+  ADO_GCP_SERVICE_CONNECTION_ID: "80c1cef0-238d-4d40-a6d2-a122a23da1fa"
 
 stages:
 - stage: BuildAndPush
-  displayName: Build and Push Images
-
   jobs:
+
   - job: DockerBuildPush
-    displayName: Build Frontend and Backend
 
     steps:
 
     - checkout: self
 
-    - task: GcpWifAuth@0
-      displayName: Authenticate to GCP
-      inputs:
-        connectedServiceId: 'ai-pod-devops-poc-nec'
+    ####################################################################
+    # Authenticate to GCP using Native Azure DevOps OIDC
+    ####################################################################
 
-    - script: |
-        gcloud auth list
-        gcloud config set project necai-001
-        gcloud auth configure-docker us-south1-docker.pkg.dev --quiet
-      displayName: Configure Artifact Registry Authentication
+    - bash: |
+        set -euo pipefail
 
-    - script: |
-        docker build -t us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId) ./frontend
+        echo "Requesting Azure DevOps OIDC token..."
 
-        docker tag us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId) \
-                   us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:latest
+        OIDC_TOKEN=$(curl -sf -X POST \
+          "$(System.CollectionUri)$(System.TeamProjectId)/_apis/distributedtask/hubs/build/plans/$(System.PlanId)/jobs/$(System.JobId)/oidctoken?serviceConnectionId=$(ADO_GCP_SERVICE_CONNECTION_ID)&api-version=7.1-preview.1" \
+          -H "Authorization: Bearer $(System.AccessToken)" \
+          -H "Content-Type: application/json" \
+          | jq -r '.oidcToken')
 
-        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:$(Build.BuildId)
-        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/frontend:latest
-      displayName: Build and Push Frontend
+        echo "Exchanging OIDC token with Google STS..."
 
-    - script: |
-        docker build -t us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId) ./backend
+        FEDERATED_TOKEN=$(curl -sf -X POST \
+          https://sts.googleapis.com/v1/token \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"audience\":\"//iam.googleapis.com/projects/$(GCP_PROJECT_NUMBER)/locations/global/workloadIdentityPools/$(GCP_WORKLOAD_POOL)/providers/$(GCP_WORKLOAD_PROVIDER)\",
+            \"grantType\":\"urn:ietf:params:oauth:grant-type:token-exchange\",
+            \"requestedTokenType\":\"urn:ietf:params:oauth:token-type:access_token\",
+            \"scope\":\"https://www.googleapis.com/auth/cloud-platform\",
+            \"subjectTokenType\":\"urn:ietf:params:oauth:token-type:jwt\",
+            \"subjectToken\":\"$OIDC_TOKEN\"
+          }" \
+          | jq -r '.access_token')
 
-        docker tag us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId) \
-                   us-south1-docker.pkg.dev/necai-001/necai-dev/backend:latest
+        echo "Generating Service Account Access Token..."
 
-        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/backend:$(Build.BuildId)
-        docker push us-south1-docker.pkg.dev/necai-001/necai-dev/backend:latest
-      displayName: Build and Push Backend
+        ACCESS_TOKEN=$(curl -sf -X POST \
+          "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GCP_DEPLOY_SA):generateAccessToken" \
+          -H "Authorization: Bearer $FEDERATED_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{"scope":["https://www.googleapis.com/auth/cloud-platform"]}' \
+          | jq -r '.accessToken')
+
+        echo "##vso[task.setvariable variable=GCP_ACCESS_TOKEN;issecret=true]$ACCESS_TOKEN"
+
+      displayName: Authenticate to GCP (Native WIF)
+
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+    ####################################################################
+    # Docker Login
+    ####################################################################
+
+    - bash: |
+        echo "$(GCP_ACCESS_TOKEN)" | docker login \
+          -u oauth2accesstoken \
+          --password-stdin \
+          https://$(GCP_REGION)-docker.pkg.dev
+      displayName: Docker Login
+
+    ####################################################################
+    # Build & Push Frontend
+    ####################################################################
+
+    - bash: |
+
+        docker build \
+          -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:$(Build.BuildId) \
+          ./frontend
+
+        docker tag \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:$(Build.BuildId) \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:latest
+
+        docker push \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:$(Build.BuildId)
+
+        docker push \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:latest
+
+      displayName: Build & Push Frontend
+
+    ####################################################################
+    # Build & Push Backend
+    ####################################################################
+
+    - bash: |
+
+        docker build \
+          -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId) \
+          ./backend
+
+        docker tag \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId) \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:latest
+
+        docker push \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId)
+
+        docker push \
+          $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:latest
+
+      displayName: Build & Push Backend
