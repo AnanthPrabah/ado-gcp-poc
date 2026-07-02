@@ -30,6 +30,15 @@ stages:
 
     - checkout: self
 
+    # Reference the ARM Workload Identity service connection
+    - task: AzureCLI@2
+      displayName: Initialize Azure Workload Identity
+      inputs:
+        azureSubscription: 'ai-pod-devops-poc-nec'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Azure ARM service connection initialized."
     ####################################################################
     # Authenticate to GCP using Native Azure DevOps OIDC
     ####################################################################
