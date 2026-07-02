@@ -59,11 +59,16 @@ stages:
 
         OIDC_TOKEN=$(echo "$OIDC_RESPONSE" | jq -r '.oidcToken')
 
-        echo "OIDC Token extracted."
+        if [ -z "$OIDC_TOKEN" ] || [ "$OIDC_TOKEN" = "null" ]; then
+            echo "Failed to retrieve OIDC token."
+            exit 1
+        fi
+
+        echo "OIDC Token extracted successfully."
 
         echo "Exchanging OIDC token with Google STS..."
 
-        FEDERATED_TOKEN=$(curl -sf -X POST \
+        STS_RESPONSE=$(curl -sS -X POST \
           https://sts.googleapis.com/v1/token \
           -H "Content-Type: application/json" \
           -d "{
@@ -73,17 +78,35 @@ stages:
             \"scope\":\"https://www.googleapis.com/auth/cloud-platform\",
             \"subjectTokenType\":\"urn:ietf:params:oauth:token-type:jwt\",
             \"subjectToken\":\"$OIDC_TOKEN\"
-          }" \
-          | jq -r '.access_token')
+          }")
+
+        echo "===== STS Response ====="
+        echo "$STS_RESPONSE"
+
+        FEDERATED_TOKEN=$(echo "$STS_RESPONSE" | jq -r '.access_token')
+
+        if [ -z "$FEDERATED_TOKEN" ] || [ "$FEDERATED_TOKEN" = "null" ]; then
+            echo "Failed to exchange token with Google STS."
+            exit 1
+        fi
 
         echo "Generating Service Account Access Token..."
 
-        ACCESS_TOKEN=$(curl -sf -X POST \
+        SA_RESPONSE=$(curl -sS -X POST \
           "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GCP_DEPLOY_SA):generateAccessToken" \
           -H "Authorization: Bearer $FEDERATED_TOKEN" \
           -H "Content-Type: application/json" \
-          -d '{"scope":["https://www.googleapis.com/auth/cloud-platform"]}' \
-          | jq -r '.accessToken')
+          -d '{"scope":["https://www.googleapis.com/auth/cloud-platform"]}')
+
+        echo "===== Service Account Response ====="
+        echo "$SA_RESPONSE"
+
+        ACCESS_TOKEN=$(echo "$SA_RESPONSE" | jq -r '.accessToken')
+
+        if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "Failed to generate Service Account access token."
+            exit 1
+        fi
 
         echo "##vso[task.setvariable variable=GCP_ACCESS_TOKEN;issecret=true]$ACCESS_TOKEN"
 
