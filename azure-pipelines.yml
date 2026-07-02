@@ -24,7 +24,7 @@ stages:
     - task: GcpWifAuth@0
       displayName: Authenticate to GCP
       inputs:
-        connectedServiceId: 'nec-azure-gcp-sc'
+        connectedServiceId: 'ai-pod-devops-poc-nec'
 
     - script: |
         gcloud auth list
