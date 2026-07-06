@@ -7,30 +7,23 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  GCP_PROJECT_ID: "necai-001"
-  GCP_PROJECT_NUMBER: "1087209949097"
-  GCP_REGION: "us-south1"
-  GCP_ARTIFACT_REPO: "necai-dev"
-
-  # Replace these with your actual values
-  GCP_WORKLOAD_POOL: "nec-test2-ip"
-  GCP_WORKLOAD_PROVIDER: "nec-test-2-provider"
-  GCP_DEPLOY_SA: "nec-test-2@necai-001.iam.gserviceaccount.com"
-
-  # Azure DevOps ARM Service Connection GUID
-  ADO_GCP_SERVICE_CONNECTION_ID: "80c1cef0-238d-4d40-a6d2-a122a23da1fa"
+- group: gcp-dev
 
 stages:
 - stage: BuildAndPush
-  jobs:
+  displayName: Build and Push Images
 
+  jobs:
   - job: DockerBuildPush
+    displayName: Build Frontend and Backend
 
     steps:
 
     - checkout: self
 
-    # Reference the ARM Workload Identity service connection
+    ####################################################################
+    # Initialize Azure Workload Identity Service Connection
+    ####################################################################
     - task: AzureCLI@2
       displayName: Initialize Azure Workload Identity
       inputs:
@@ -39,10 +32,10 @@ stages:
         scriptLocation: inlineScript
         inlineScript: |
           echo "Azure ARM service connection initialized."
-    ####################################################################
-    # Authenticate to GCP using Native Azure DevOps OIDC
-    ####################################################################
 
+    ####################################################################
+    # Authenticate to GCP using Azure DevOps OIDC
+    ####################################################################
     - bash: |
         set -euo pipefail
 
@@ -54,23 +47,15 @@ stages:
           -H "Content-Type: application/json" \
           -d "{}")
 
-        echo "===== OIDC Response ====="
-        echo "$OIDC_RESPONSE"
-
         OIDC_TOKEN=$(echo "$OIDC_RESPONSE" | jq -r '.oidcToken')
 
         if [ -z "$OIDC_TOKEN" ] || [ "$OIDC_TOKEN" = "null" ]; then
-            echo "Failed to retrieve OIDC token."
-            exit 1
+          echo "Failed to retrieve OIDC token."
+          echo "$OIDC_RESPONSE"
+          exit 1
         fi
 
-        echo "OIDC Token extracted successfully."
-
-        echo "Decoding token..."
-
-        PAYLOAD=$(echo "$OIDC_TOKEN" | cut -d'.' -f2 | tr '_-' '/+' | base64 -d 2>/dev/null || true)
-
-        echo "$PAYLOAD" | jq .
+        echo "OIDC token retrieved successfully."
 
         echo "Exchanging OIDC token with Google STS..."
 
@@ -86,17 +71,15 @@ stages:
             \"subjectToken\":\"$OIDC_TOKEN\"
           }")
 
-        echo "===== STS Response ====="
-        echo "$STS_RESPONSE"
-
         FEDERATED_TOKEN=$(echo "$STS_RESPONSE" | jq -r '.access_token')
 
         if [ -z "$FEDERATED_TOKEN" ] || [ "$FEDERATED_TOKEN" = "null" ]; then
-            echo "Failed to exchange token with Google STS."
-            exit 1
+          echo "Failed to exchange token with Google STS."
+          echo "$STS_RESPONSE"
+          exit 1
         fi
 
-        echo "Generating Service Account Access Token..."
+        echo "Generating GCP Service Account access token..."
 
         SA_RESPONSE=$(curl -sS -X POST \
           "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/$(GCP_DEPLOY_SA):generateAccessToken" \
@@ -104,14 +87,12 @@ stages:
           -H "Content-Type: application/json" \
           -d '{"scope":["https://www.googleapis.com/auth/cloud-platform"]}')
 
-        echo "===== Service Account Response ====="
-        echo "$SA_RESPONSE"
-
         ACCESS_TOKEN=$(echo "$SA_RESPONSE" | jq -r '.accessToken')
 
         if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
-            echo "Failed to generate Service Account access token."
-            exit 1
+          echo "Failed to generate Service Account access token."
+          echo "$SA_RESPONSE"
+          exit 1
         fi
 
         echo "##vso[task.setvariable variable=GCP_ACCESS_TOKEN;issecret=true]$ACCESS_TOKEN"
@@ -124,7 +105,6 @@ stages:
     ####################################################################
     # Docker Login
     ####################################################################
-
     - bash: |
         echo "$(GCP_ACCESS_TOKEN)" | docker login \
           -u oauth2accesstoken \
@@ -135,9 +115,7 @@ stages:
     ####################################################################
     # Build & Push Frontend
     ####################################################################
-
     - bash: |
-
         docker build \
           -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/frontend:$(Build.BuildId) \
           ./frontend
@@ -157,9 +135,7 @@ stages:
     ####################################################################
     # Build & Push Backend
     ####################################################################
-
     - bash: |
-
         docker build \
           -t $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId) \
           ./backend
