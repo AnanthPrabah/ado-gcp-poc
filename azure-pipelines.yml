@@ -151,3 +151,24 @@ stages:
           $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:latest
 
       displayName: Build & Push Backend
+
+      ####################################################################
+    # Deploy Backend to Cloud Run
+    ####################################################################
+    - bash: |
+ 
+        curl -sS -X PATCH \
+          "https://run.googleapis.com/v2/projects/$(GCP_PROJECT_ID)/locations/$(GCP_REGION)/services/$(CLOUD_RUN_SERVICE_BE)?updateMask=template.containers[0].image%22 \
+          -H "Authorization: Bearer $(GCP_ACCESS_TOKEN)" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"template\": {
+              \"containers\": [
+                {
+                  \"image\": \"$(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId)\"
+                }
+              ]
+            }
+          }"
+ 
+      displayName: Deploy Backend to Cloud Run
