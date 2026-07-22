@@ -153,46 +153,13 @@ stages:
       displayName: Build & Push Backend
 
     ####################################################################
-    # Install Google Cloud SDK
-    ####################################################################
-    - bash: |
-        sudo apt-get update
-        sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
-
-        echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | \
-          sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-
-        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-          sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
-
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-cli
-
-        gcloud version
-
-      displayName: Install Google Cloud SDK
-
-    ####################################################################
-    # Authenticate gcloud
-    ####################################################################
-    - bash: |
-        echo "$(GCP_ACCESS_TOKEN)" | \
-          gcloud auth activate-access-token --access-token-file=-
-
-        gcloud config set project $(GCP_PROJECT_ID)
-
-        gcloud auth list
-
-      displayName: Authenticate gcloud
-
-    ####################################################################
     # Deploy Backend
     ####################################################################
     - bash: |
-        gcloud run deploy $(CLOUD_RUN_SERVICE_BE) \
-          --image=$(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId) \
-          --region=$(GCP_REGION) \
-          --platform=managed \
-          --quiet
 
-      displayName: Deploy Backend
+        curl -s \
+          -H "Authorization: Bearer $(GCP_ACCESS_TOKEN)" \
+          "https://run.googleapis.com/v2/projects/$(GCP_PROJECT_ID)/locations/$(GCP_REGION)/services/$(CLOUD_RUN_SERVICE_BE)" \
+          | jq .
+
+      displayName: Get Cloud Run Service
