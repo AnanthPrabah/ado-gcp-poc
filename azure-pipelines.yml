@@ -152,23 +152,47 @@ stages:
 
       displayName: Build & Push Backend
 
-      ####################################################################
-    # Deploy Backend to Cloud Run
+    ####################################################################
+    # Install Google Cloud SDK
     ####################################################################
     - bash: |
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates gnupg curl
 
-        curl -sS -X PATCH \
-          "https://run.googleapis.com/v2/projects/$(GCP_PROJECT_ID)/locations/$(GCP_REGION)/services/$(CLOUD_RUN_SERVICE_BE)?updateMask=template.containers[0].image" \
-          -H "Authorization: Bearer $(GCP_ACCESS_TOKEN)" \
-          -H "Content-Type: application/json" \
-          -d "{
-            \"template\": {
-              \"containers\": [
-                {
-                  \"image\": \"$(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId)\"
-                }
-              ]
-            }
-          }"
+        echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | \
+          sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
 
-      displayName: Deploy Backend to Cloud Run
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+          sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-cli
+
+        gcloud version
+
+      displayName: Install Google Cloud SDK
+
+    ####################################################################
+    # Authenticate gcloud
+    ####################################################################
+    - bash: |
+        echo "$(GCP_ACCESS_TOKEN)" | \
+          gcloud auth activate-access-token --access-token-file=-
+
+        gcloud config set project $(GCP_PROJECT_ID)
+
+        gcloud auth list
+
+      displayName: Authenticate gcloud
+
+    ####################################################################
+    # Deploy Backend
+    ####################################################################
+    - bash: |
+        gcloud run deploy $(CLOUD_RUN_SERVICE_BE) \
+          --image=$(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GCP_ARTIFACT_REPO)/backend:$(Build.BuildId) \
+          --region=$(GCP_REGION) \
+          --platform=managed \
+          --quiet
+
+      displayName: Deploy Backend
